@@ -20,7 +20,7 @@ def picture_outlier_pursuit(dir='../datasets/lena_bin.png'):
     # 给随机的列附加整数型正态噪声，噪声均值为0，方差为1，适配图像范围
 
     # adversarial噪声方式为各列均相同的正态分布
-    noise_type = 'natrual'
+    noise_type = 'adversarial'
     # 随机选取损坏列，生成一个随机向量，向量中元素为0或1，1表示该列损坏
     Omega = np.random.rand(image.shape[1]) < rou
     if noise_type == 'natrual':
@@ -32,9 +32,9 @@ def picture_outlier_pursuit(dir='../datasets/lena_bin.png'):
                 image_outlier[image_outlier < 0] = 0
                 image_outlier[image_outlier > 1] = 1
     elif noise_type == 'adversarial':
-        noise = np.random.normal(0, 25, image.shape[0])
+        noise = np.random.normal(0, 1, image.shape[0]) * 0.02
 
-        image_outlier[:, Omega] += noise.reshape((image.shape[0], 1)) * 0.02
+        image_outlier[:, Omega] += noise.reshape((image.shape[0], 1))
         image_outlier[image_outlier < 0] = 0
         image_outlier[image_outlier > 1] = 1
     elif noise_type == 'zero':
