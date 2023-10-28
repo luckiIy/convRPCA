@@ -10,6 +10,15 @@ def SVT(M, tau):
     :param tau: threshold
     :return: singular value thresholding
     """
-    (U, sigma, V) = np.linalg.svd(M, full_matrices=False)
-    sigma = np.where(sigma > tau, sigma - tau, 0)
-    return U @ np.diag(sigma) @ V
+    U, sigma, VT = np.linalg.svd(M, full_matrices=False)
+    return U @ np.diag(shrink(sigma, tau)) @ VT
+
+
+def shrink(X, tau):
+    """
+    # 对矩阵X进行软阈值化
+    :param X: 输入矩阵
+    :param tau: 阈值
+    :return: 软阈值化后的矩阵
+    """
+    return np.sign(X) * np.maximum(abs(X) - tau, 0)
