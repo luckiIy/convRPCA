@@ -129,17 +129,17 @@ if __name__ == '__main__':
     X_adj = X_adj / 3
     assert np.allclose(X, X_adj.ravel())
     # 2D
-    X = np.array([[1, 2, 3, 4, 5, 6, 7, 8],
-                  [9, 10, 11, 12, 13, 14, 15, 16]]).T
-    A = cconv_nd(X, (3, 2))
-    X_adj = adj_nd(A, (8, 2), (3, 2))
-    X_adj = X_adj / 6
+    X = np.array([[1, 2, 3, 4], [5, 6, 7, 8],
+                  [9, 10, 11, 12], [13, 14, 15, 16]])
+    A = cconv_nd(X, (2, 2))
+    X_adj = adj_nd(A, (4, 4), (2, 2))
+    X_adj = X_adj / 4
     assert np.allclose(X, X_adj)
     # 3D
     X = np.array([[[1, 2, 3, 4, 5, 6, 7, 8],
                    [9, 10, 11, 12, 13, 14, 15, 16]],
                   [[17, 18, 19, 20, 21, 22, 23, 24],
-                   [25, 26, 27, 28, 29, 30, 31, 32]]])
+                   [25, 26, 27, 28, 29, 30, 31, 32]]]).T
     A = cconv_nd(X, (2, 2, 3))
     X_adj = adj_nd(A, (2, 2, 8), (2, 2, 3))
     X_adj = X_adj / 12

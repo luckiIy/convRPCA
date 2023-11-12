@@ -5,6 +5,7 @@
 import os
 import numpy as np
 
+from models.conv import adj_nd, cconv_nd
 
 def read_data(data_name, data_path):
     """
@@ -91,9 +92,158 @@ def mnist_outlier_1_7(structure='matrix', ratio=0.1, distribution='random', data
         raise ValueError('Unsupported distribution.')
 
 
+def low_rank_synthetic_data(rank, m=400, n=400, outlier_ratio=0.1, outlier_distribution='random', insert_mode='add',
+                            noise_mode='natrual'):
+    """
+    生成被破坏的低秩矩阵
+    :param rank: 矩阵秩
+    :param m: 矩阵行数
+    :param n: 矩阵列数
+
+    :param outlier_ratio: 异常数据比例
+    :param outlier_distribution: 异常数据分布，random为随机分布，ordered为有序分布
+    :param insert_mode: 异常数据插入方式，replace为替换，add为相加
+    :param noise_mode: 噪声分布，natrual为各列均不相同的正态分布，adversarial为各列均相同的正态分布，zero为全为0
+
+    :return: synthetic_matrix: 破坏后的矩阵, outlier_omega: 异常数据位置, low_rank_matrix: 低秩矩阵, noise_matrix: 噪声矩阵
+    """
+    # 生成低秩矩阵
+    U = np.random.randn(m, rank)
+    V = np.random.randn(rank, n)
+    low_rank_matrix = U @ V
+
+    # 生成异常数据
+    outlier_num = int(n * outlier_ratio)
+    if outlier_distribution == 'ordered':
+        # 有序分布
+        outlier_omega = np.zeros(n)
+        outlier_omega[:outlier_num] = 1
+    elif outlier_distribution == 'random':
+        # 随机分布
+        outlier_omega = np.zeros(n)
+        outlier_omega[np.random.choice(n, outlier_num, replace=False)] = 1
+
+    else:
+        raise ValueError('Unsupported outlier distribution.')
+
+    # 生成不同形式噪声
+    if noise_mode == 'natrual':
+        # natrual噪声方式为各列均不相同的正态分布
+        noise_matrix = np.zeros((m, n))
+        noise_matrix[:, outlier_omega == 1] = np.random.normal(0, 1, (m, outlier_num))
+    elif noise_mode == 'adversarial':
+        # adversarial噪声方式为各列均相同的正态分布
+        noise_matrix = np.zeros((m, n))
+        noise_matrix[:, outlier_omega == 1] = np.random.normal(0, 1, (m, 1))
+    elif noise_mode == 'zero':
+        noise_matrix = np.zeros((m, n))
+    else:
+        raise ValueError('Unsupported noise mode.')
+
+    # 生成破坏后的矩阵
+    if insert_mode == 'replace':
+        # 替换异常值
+        synthetic_matrix = low_rank_matrix.copy()
+        synthetic_matrix[:, outlier_omega == 1] = noise_matrix[:, outlier_omega == 1]
+    elif insert_mode == 'add':
+        # 相加异常值
+        synthetic_matrix = low_rank_matrix.copy()
+        synthetic_matrix[:, outlier_omega == 1] += noise_matrix[:, outlier_omega == 1]
+    else:
+        raise ValueError('Unsupported insert mode.')
+
+    return synthetic_matrix, outlier_omega, low_rank_matrix, noise_matrix
+
+def convlr_synthetic_data(conv_rank, m=400, n=400, outlier_ratio=0.1, outlier_distribution='random', insert_mode='add',
+                            noise_mode='natrual'):
+    """
+    生成被破坏的卷积低秩矩阵
+    :param conv_rank: 卷积矩阵秩
+    :param m: 矩阵行数
+    :param n: 矩阵列数
+
+    :param outlier_ratio: 异常数据比例
+    :param outlier_distribution: 异常数据分布，random为随机分布，ordered为有序分布
+    :param insert_mode: 异常数据插入方式，replace为替换，add为相加
+    :param noise_mode: 噪声分布，natrual为各列均不相同的正态分布，adversarial为各列均相同的正态分布，zero为全为0
+
+    :return:
+    """
+    # 生成卷积低秩的矩阵
+    # 这里暂时先采用生成一个卷积低秩序列的方式，而后reshape为矩阵
+    mn = m * n
+    M = np.zeros(mn)
+    a = conv_rank // 2
+    # M_t = \sum_{i=1}^{a} sin(2 * t * i * pi / mn)
+    for t in range(mn):
+        for i in range(1, a + 1):
+            M[t] += np.sin(2 * t * i * np.pi / mn)
+    M = M.reshape((m, n))
+    # 验证卷积矩阵的秩，后续删除该部分
+    # Ak_M = cconv_nd(M, (m, n))
+    # U, S, VT = np.linalg.svd(Ak_M)
+    # print(S)
+    # print(np.linalg.matrix_rank(Ak_M))
+
+    # 生成异常数据
+    outlier_num = int(n * outlier_ratio)
+    if outlier_distribution == 'ordered':
+        # 有序分布
+        outlier_omega = np.zeros(n)
+        outlier_omega[:outlier_num] = 1
+    elif outlier_distribution == 'random':
+        # 随机分布
+        outlier_omega = np.zeros(n)
+        outlier_omega[np.random.choice(n, outlier_num, replace=False)] = 1
+
+    else:
+        raise ValueError('Unsupported outlier distribution.')
+
+    # 生成不同形式噪声
+    if noise_mode == 'natrual':
+        # natrual噪声方式为各列均不相同的正态分布
+        noise_matrix = np.zeros((m, n))
+        noise_matrix[:, outlier_omega == 1] = np.random.normal(0, 1, (m, outlier_num))
+    elif noise_mode == 'adversarial':
+        # adversarial噪声方式为各列均相同的正态分布
+        noise_matrix = np.zeros((m, n))
+        noise_matrix[:, outlier_omega == 1] = np.random.normal(0, 1, (m, 1))
+    elif noise_mode == 'zero':
+        noise_matrix = np.zeros((m, n))
+    else:
+        raise ValueError('Unsupported noise mode.')
+
+    # 生成破坏后的矩阵
+    if insert_mode == 'replace':
+        # 替换异常值
+        synthetic_matrix = M.copy()
+        synthetic_matrix[:, outlier_omega == 1] = noise_matrix[:, outlier_omega == 1]
+    elif insert_mode == 'add':
+        # 相加异常值
+        synthetic_matrix = M.copy()
+        synthetic_matrix[:, outlier_omega == 1] += noise_matrix[:, outlier_omega == 1]
+    else:
+        raise ValueError('Unsupported insert mode.')
+
+    return synthetic_matrix, outlier_omega, M, noise_matrix
+
+
+
+
+
+
 if __name__ == '__main__':
     # 读取mnist数据集中的1和7组成的数据集
-    x, y = mnist_outlier_1_7()
-    print(x.shape)
-    print(y.shape)
+    # x, y = mnist_outlier_1_7()
+    # print(x.shape)
+    # print(y.shape)
+    # 测试合成低秩数据的生成效果
+    outlier_distributions = ['random', 'ordered']
+    insert_modes = ['replace', 'add']
+    noise_modes = ['natrual', 'adversarial', 'zero']
+    for outlier_distribution in outlier_distributions:
+        for insert_mode in insert_modes:
+            for noise_mode in noise_modes:
+                synthetic_matrix, outlier_omega, low_rank_matrix, noise_matrix = convlr_synthetic_data(10, m=100, n=100, outlier_ratio=0.1, outlier_distribution=outlier_distribution, insert_mode=insert_mode, noise_mode=noise_mode)
+
     exit()
