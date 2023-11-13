@@ -10,7 +10,7 @@ from utils.dataload import convlr_synthetic_data, low_rank_synthetic_data
 from models.outlier_pursuit import lr_outlier_pursuit, convlr_outlier_pursuit
 from models.conv import adj_nd, cconv_nd
 
-def synthetic_data_ver(m=100, n=100):
+def synthetic_data_ver(m=32, n=32):
     '''
     验证在合成的带噪声的卷积低秩数据集上的复原能力
     :param m: 横轴表示数据维度
@@ -18,12 +18,18 @@ def synthetic_data_ver(m=100, n=100):
     :return:
     '''
 
+    outler_distribution = 'random'
+    insert_mode = 'replace'
+    noise_mode = 'zero'
+
     pursuit_methods = ['conv']
+
+
     # 设定需要测试的不同的卷积秩conv_rank，以及不同的异常数据比例outlier_ratio
     # 卷积秩从2~40，间隔为2
-    conv_rank_list = list(range(2, 40, 2))
+    conv_rank_list = list(range(2, 30, 2))
     # 异常数据比例从0.01~0.2，间隔为0.01
-    outlier_ratio_list = [i / 100 for i in range(1, 21, 1)]
+    outlier_ratio_list = [i / n for i in range(0, 16, 1)]
 
     # 生成矩阵记录不同卷积秩和异常数据比例下是否得到精确恢复
     # 1表示精确恢复，0表示未精确恢复
@@ -35,13 +41,13 @@ def synthetic_data_ver(m=100, n=100):
             # 生成合成的卷积低秩数据集
             synthetic_matrix, outlier_omega, low_rank_matrix, noise_matrix = \
                 convlr_synthetic_data(conv_rank, m=m, n=n, outlier_ratio=outlier_ratio,
-                                      outlier_distribution='random', insert_mode='add', noise_mode='natrual')
+                                      outlier_distribution=outler_distribution, insert_mode=insert_mode, noise_mode=noise_mode)
             # 将合成的卷积低秩数据集置入outlier pursuit算法
 
             for pursuit_method in pursuit_methods:
                 # 将损坏图像置入outlier pursuit算法
                 if pursuit_method == 'conv':
-                    kernel_size = (m//4, n//4)
+                    kernel_size = (m, n)
                     lambda1 = 1 * kernel_size[0] * kernel_size[1] / (math.sqrt(n))
                     (L, S) = convlr_outlier_pursuit(synthetic_matrix, kernel_size, lambda1=lambda1, max_iter=1000,
                                                     tol=1e-6, display=True)
@@ -100,6 +106,8 @@ def synthetic_data_ver(m=100, n=100):
 
                 # 记录是否得到精确恢复，矩阵按照conv_rank从小到大排列，按照outlier_ratio从小到大排列
                 success_matrix[conv_rank_list.index(conv_rank), outlier_ratio_list.index(outlier_ratio)] = is_success
+    # 储存success_matrix到results文件夹，文件名为synthetic_data_ver.npy
+    np.save('results/synthetic_data_ver.npy', success_matrix)
 
     # 可视化success_matrix，坐标轴为conv_rank和outlier_ratio，值为0表示未精确恢复，值为1表示精确恢复
     plt.figure(figsize=(10, 10))

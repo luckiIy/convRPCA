@@ -34,7 +34,7 @@ def convlr_outlier_pursuit(M, K, lambda1=0, max_iter=100, tol=1e-6, display=Fals
         lambda1 = 1 * k / (math.sqrt(m))
     M_norm2 = np.linalg.norm(M, ord=2)
     mu = 1 / M_norm2
-    rho = 1.2
+    rho = 1.3
     mu_bar = mu * 1e7
 
     # iterate

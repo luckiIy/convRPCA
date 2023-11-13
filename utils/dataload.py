@@ -170,15 +170,12 @@ def convlr_synthetic_data(conv_rank, m=400, n=400, outlier_ratio=0.1, outlier_di
     :return:
     """
     # 生成卷积低秩的矩阵
-    # 这里暂时先采用生成一个卷积低秩序列的方式，而后reshape为矩阵
-    mn = m * n
-    M = np.zeros(mn)
+    # 卷积低秩部分的生成方式为M_mn = \sum_{i=1}^{a} sin(2 * i * m * pi / mn) * sin(2 * i * n * pi / mn)
+    M = np.zeros((m, n))
     a = conv_rank // 2
-    # M_t = \sum_{i=1}^{a} sin(2 * t * i * pi / mn)
-    for t in range(mn):
+    for (mi, ni) in np.ndindex(m, n):
         for i in range(1, a + 1):
-            M[t] += np.sin(2 * t * i * np.pi / mn)
-    M = M.reshape((m, n))
+            M[mi, ni] += np.sin(2 * i * mi * np.pi / m) * np.sin(2 * i * ni * np.pi / n)
     # 验证卷积矩阵的秩，后续删除该部分
     # Ak_M = cconv_nd(M, (m, n))
     # U, S, VT = np.linalg.svd(Ak_M)
