@@ -33,35 +33,32 @@ def convlr_outlier_pursuit(M, K, lambda1=0, max_iter=100, tol=1e-6, display=Fals
     if lambda1 == 0:
         lambda1 = 1 * k / (math.sqrt(m))
     M_norm2 = np.linalg.norm(M, ord=2)
-    # 对两个尺度不同的增广项引入不同的惩罚系数
-    mu1 = 1 / (k * M_norm2) * 1e-3
-    mu2 = 1 / M_norm2 * 1e-3
+
+    mu = 1 / M_norm2 * 1e-3
 
     rho = 1.05
-    mu1_bar = mu1 * 1e10
-    mu2_bar = mu2 * 1e10
+    mu_bar = mu * 1e11
 
     # iterate
     for i in range(max_iter):
         AkL = cconv_nd(L, K)
         # update Z
-        Z = SVT(AkL + Y1 / mu1, 1 / mu1)
+        Z = SVT(AkL + Y1 / mu, 1 / mu)
         # update L
-        L = (M - S - Y2 / mu2 + adj_nd(Z - Y1 / mu1, M.shape, K)) / (1 + k)
+        L = (M - S - Y2 / mu + adj_nd(Z - Y1 / mu, M.shape, K)) / (1 + k)
         # update S
-        Q = M - L - Y2 / mu2
-        S = columnwise_shrinkage(Q, lambda1 / mu2)
+        Q = M - L - Y2 / mu
+        S = columnwise_shrinkage(Q, lambda1 / mu)
         # update Y1, Y2
-        Y1 = Y1 + mu1 * (AkL - Z)
-        Y2 = Y2 + mu2 * (L + S - M)
+        Y1 = Y1 + mu * (AkL - Z)
+        Y2 = Y2 + mu * (L + S - M)
         # update mu
-        mu1 = min(mu1 * rho, mu1_bar)
-        mu2 = min(mu2 * rho, mu2_bar)
+        mu = min(mu * rho, mu_bar)
         # check convergence
         diff_Z = np.linalg.norm(AkL - Z, ord=2) / (math.sqrt(k) * M_norm2)
         diff_M = np.linalg.norm(L + S - M, ord=2) / M_norm2
         # 计算||AkL||_*和||S||_2,1，用于展示，后续删除
-        AkL_norm = np.linalg.norm(AkL, ord='nuc')
+        AkL_norm = np.linalg.norm(cconv_nd(L, K), ord='nuc')
         S_norm = np.sum(np.linalg.norm(S[:, i], ord=2) for i in range(n))
         stopC = max(diff_Z, diff_M)
         if i % 1 == 0 and display:

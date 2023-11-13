@@ -177,7 +177,7 @@ def convlr_synthetic_data(conv_rank, m=400, n=400, outlier_ratio=0.1, outlier_di
         for i in range(1, a + 1):
             M[mi, ni] += np.sin(2 * i * mi * np.pi / m) * np.sin(2 * i * ni * np.pi / n)
     # 验证卷积矩阵的秩，后续删除该部分
-    # Ak_M = cconv_nd(M, (m, n))
+    # Ak_M = cconv_nd(M, (m//3, n//3))
     # U, S, VT = np.linalg.svd(Ak_M)
     # print(S)
     # print(np.linalg.matrix_rank(Ak_M))
@@ -222,6 +222,7 @@ def convlr_synthetic_data(conv_rank, m=400, n=400, outlier_ratio=0.1, outlier_di
     else:
         raise ValueError('Unsupported insert mode.')
 
+    noise_matrix = synthetic_matrix - M
     return synthetic_matrix, outlier_omega, M, noise_matrix
 
 
@@ -241,6 +242,6 @@ if __name__ == '__main__':
     for outlier_distribution in outlier_distributions:
         for insert_mode in insert_modes:
             for noise_mode in noise_modes:
-                synthetic_matrix, outlier_omega, low_rank_matrix, noise_matrix = convlr_synthetic_data(10, m=100, n=100, outlier_ratio=0.1, outlier_distribution=outlier_distribution, insert_mode=insert_mode, noise_mode=noise_mode)
+                synthetic_matrix, outlier_omega, low_rank_matrix, noise_matrix = convlr_synthetic_data(10, m=50, n=50, outlier_ratio=0.1, outlier_distribution=outlier_distribution, insert_mode=insert_mode, noise_mode=noise_mode)
 
     exit()
