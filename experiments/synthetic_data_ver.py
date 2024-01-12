@@ -73,6 +73,7 @@ def synthetic_data_ver(m=32, n=32):
                 else:
                     print("No such pursuit method!")
                     exit()
+                '''
                 # 得到矩阵的可视化
                 plt.figure(figsize=(10, 10))
                 plt.suptitle(pursuit_method + " conv_rank:" + str(conv_rank) + " outlier_ratio:" + str(outlier_ratio))
@@ -94,7 +95,7 @@ def synthetic_data_ver(m=32, n=32):
                 plt.bar(range(S.shape[1]), Sj_norm, color=['r' if outlier_omega[i] else 'b' for i in range(S.shape[1])], width=1)
                 plt.title('Column L2 Norm')
                 plt.show()
-
+                '''
                 # 验证是否能够正确分离出异常值
                 # 这里有个问题，我们是仅关注L的列空间与S在正常值部分是否为0，还是关注L与S是否得到精确恢复？
                 # L_diff = np.zeros((m, n))
@@ -171,7 +172,20 @@ def multi_synthetic_data_ver(rep_times=10, m=32, n=32):
 
 if __name__ == '__main__':
     # synthetic_data_ver()
-    multi_synthetic_data_ver()
+    # multi_synthetic_data_ver()
+
+    # 读取实验结果
+    multi_success_matrix = np.load('multi_success_matrix.npy')
+    # 按通道求和后绘制图像
+    plt.figure(figsize=(10, 10))
+    plt.imshow(multi_success_matrix.sum(axis=0), cmap='gray')
+    plt.xlabel('outlier_ratio')
+    plt.ylabel('conv_rank')
+    plt.xticks(range(0, 8, 1), [i / 10 for i in range(0, 8, 1)])
+    plt.yticks(range(0, 8, 1), range(2, 18, 2))
+    plt.title('Multi Success Matrix')
+    plt.show()
+    plt.savefig('multi_success_matrix.png')
     exit()
 
 
