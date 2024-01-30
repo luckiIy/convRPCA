@@ -17,13 +17,13 @@ from models.outlier_pursuit import tensor_convlr_outlier_pursuit
 # from utils.dataload import tensor_highway_outlier
 from utils.evaluation_indicator import psnr
 
-def tensor_highway_outlier(outlier_num=5, outlier_distribution='random', noise_mode='part_zero'):
+def tensor_highway_outlier(outlier_num=5, outlier_distribution='random', noise_mode='total_noise'):
     """
     读取highway张量形式数据集，对其进行异常数据插入，返回异常数据集
 
     :param outlier_num: 异常数据数量
     :param outlier_distribution: 异常数据分布，random为随机分布，ordered为有序分布
-    :param noise_mode: 噪声分布，part_zero为对异常数据的部分区域置0，part_random为对异常数据的部分区域置随机值，total_noise为对异常数据加入随机噪声
+    :param noise_mode: 噪声分布，part_zero为对异常数据的部分区域置0，part_random为对异常数据的部分区域置随机值，total_noise为对异常数据加入随机噪声, total_zero为对异常数据置0
     :return: corrupted_tensor: 异常数据集, outlier_omega: 异常数据位置, original_tensor: 原始数据集, outlier_tensor: 异常数据
     """
     # 读取数据集
@@ -72,8 +72,8 @@ def tensor_highway_outlier(outlier_num=5, outlier_distribution='random', noise_m
             x = np.random.randint(0, image_x - 10)
             y = np.random.randint(0, image_y - 10)
             image_outlier[x:x+10, y:y+10] = 0
-
         corrupted_tensor[:, :, outlier_omega == 1] = corrupted_tensor_outlier
+
     elif noise_mode == 'total_noise':
         corrupted_tensor = original_tensor.copy()
         corrupted_tensor_outlier = corrupted_tensor[:, :, outlier_omega == 1]
@@ -83,14 +83,18 @@ def tensor_highway_outlier(outlier_num=5, outlier_distribution='random', noise_m
             # 对整张图加入随机噪声
             image_outlier += np.random.normal(0, 1, image_outlier.shape)
             image_outlier = np.clip(image_outlier, 0, 1)
-
         corrupted_tensor[:, :, outlier_omega == 1] = corrupted_tensor_outlier
+
+    elif noise_mode == 'total_zero':
+        corrupted_tensor = original_tensor.copy()
+        corrupted_tensor[:, :, outlier_omega == 1] = 0
+
     else:
         raise ValueError('Unsupported noise mode.')
 
-    # outlier_tensor = corrupted_tensor - original_tensor
+    outlier_tensor = corrupted_tensor - original_tensor
 
-    return corrupted_tensor, original_tensor, outlier_omega
+    return corrupted_tensor, original_tensor, outlier_omega, outlier_tensor
 
 
 def highway_recovery(corrupted_tensor, original_tensor, outlier_omega):
@@ -196,7 +200,7 @@ if __name__ == '__main__':
             plt.title('Sparse Image')
             plt.show()
 
-    corrupted_tensor, original_tensor, outlier_omega = tensor_highway_outlier(noise_mode='total_noise')
+    corrupted_tensor, original_tensor, outlier_omega, outlier_tensor = tensor_highway_outlier(noise_mode='total_noise')
     highway_recovery(corrupted_tensor, original_tensor, outlier_omega)
     # read_display()
 

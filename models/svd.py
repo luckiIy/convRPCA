@@ -1,5 +1,5 @@
 '''
-会用到svd操作的函数，放在一起方便以后更换svd库
+会用到svd操作的函数，放在一起方便以后更换svd库，加速或者GPU加速等
 '''
 import numpy as np
 
@@ -22,3 +22,4 @@ def shrink(X, tau):
     :return: 软阈值化后的矩阵
     """
     return np.sign(X) * np.maximum(abs(X) - tau, 0)
+

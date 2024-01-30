@@ -8,6 +8,7 @@ from PIL import Image
 
 from models.conv import adj_nd, cconv_nd
 
+
 def read_data(data_name, data_path):
     """
     :param data_name: 数据集名称
@@ -18,6 +19,7 @@ def read_data(data_name, data_path):
         return read_mnist(data_path)
     else:
         raise ValueError('Unsupported dataset.')
+
 
 def read_mnist(data_path):
     """
@@ -38,7 +40,9 @@ def read_mnist(data_path):
     # 返回数据集
     return x_train, y_train, x_test, y_test
 
-def mnist_outlier_1_7(structure='matrix', ratio=0.1, distribution='random', data_path='../datasets/digit-recognizer', data_num=1000):
+
+def mnist_outlier_1_7(structure='matrix', ratio=0.1, distribution='random', data_path='../datasets/digit-recognizer',
+                      data_num=1000):
     """
     使用mnist中的1和一小部分的7组成的数据集, 1为正常数据，7为异常数据
     如果structure为matrix则每张图片展开，返回矩阵形式的数据集，如果structure为tensor则返回张量形式的数据集
@@ -156,8 +160,9 @@ def low_rank_synthetic_data(rank, m=400, n=400, outlier_ratio=0.1, outlier_distr
     noise_matrix = synthetic_matrix - low_rank_matrix
     return synthetic_matrix, outlier_omega, low_rank_matrix, noise_matrix
 
+
 def convlr_synthetic_data(conv_rank, m=400, n=400, outlier_ratio=0.1, outlier_distribution='random', insert_mode='add',
-                            noise_mode='natrual'):
+                          noise_mode='natrual'):
     """
     生成被破坏的卷积低秩矩阵
     :param conv_rank: 卷积矩阵秩
@@ -169,7 +174,7 @@ def convlr_synthetic_data(conv_rank, m=400, n=400, outlier_ratio=0.1, outlier_di
     :param insert_mode: 异常数据插入方式，replace为替换，add为相加
     :param noise_mode: 噪声分布，natrual为各列均不相同的正态分布，adversarial为各列均相同的正态分布，zero为全为0
 
-    :return:
+    :return: synthetic_matrix: 破坏后的矩阵, outlier_omega: 异常数据位置, M: 低秩矩阵, noise_matrix: 噪声矩阵
     """
     # 生成卷积低秩的矩阵
     # 卷积低秩部分的生成方式为M_mn = \sum_{i=1}^{a} sin(2 * i * m * pi / mn) * sin(2 * i * n * pi / mn)
@@ -186,8 +191,6 @@ def convlr_synthetic_data(conv_rank, m=400, n=400, outlier_ratio=0.1, outlier_di
     # U, S, VT = np.linalg.svd(Ak_M)
     # print(S)
     # print(np.linalg.matrix_rank(Ak_M))
-
-
 
     # 生成异常数据
     outlier_num = int(n * outlier_ratio)
@@ -233,71 +236,13 @@ def convlr_synthetic_data(conv_rank, m=400, n=400, outlier_ratio=0.1, outlier_di
     return synthetic_matrix, outlier_omega, M, noise_matrix
 
 
-# def tensor_highway_outlier(outlier_num=5, outlier_distribution='random', noise_mode='part_zero'):
-#     """
-#     读取highway张量形式数据集，对其进行异常数据插入，返回异常数据集
-#
-#     :param outlier_num: 异常数据数量
-#     :param outlier_distribution: 异常数据分布，random为随机分布，ordered为有序分布
-#     :param noise_mode: 噪声分布，part_zero为对异常数据的部分区域置0，part_random为对异常数据的部分区域置随机值，all_zero为对异常数据置0，all_random为对异常数据置随机值
-#     :return: corrupted_tensor: 异常数据集, outlier_omega: 异常数据位置, original_tensor: 原始数据集, outlier_tensor: 异常数据
-#     """
-#     # 读取数据集
-#     data_path = '../datasets/highway'
-#     # 数据为按名称顺序排列的一组灰度图像，将其整合为张量
-#     # 先查看当前目录下png文件的名称与数量
-#     file_list = os.listdir(data_path)
-#     file_list = [file for file in file_list if file.endswith('.png')]
-#     file_list.sort()
-#
-#     # 读取第一张图片，获取图片大小
-#     image = Image.open(os.path.join(data_path, file_list[0])).convert('L')
-#     image = np.array(image).astype('float32') / 255.0
-#     # 将图像转换为矩阵
-#     original_tensor = np.zeros((image.shape[0], image.shape[1], len(file_list)))
-#     original_tensor[:, :, 0] = image
-#     for i in range(1, len(file_list)):
-#         image = Image.open(os.path.join(data_path, file_list[i])).convert('L')
-#         image = np.array(image).astype('float32') / 255.0
-#         original_tensor[:, :, i] = image
-#
-#     # 生成异常数据
-#     outlier_num = outlier_num
-#
-#     outlier_omega = np.zeros(len(file_list))
-#     # 选择数据损坏方式
-#     if outlier_distribution == 'ordered':
-#         # 有序分布
-#         outlier_omega[:outlier_num] = 1
-#     elif outlier_distribution == 'random':
-#         # 随机分布
-#         outlier_omega[np.random.choice(len(file_list), outlier_num, replace=False)] = 1
-#     else:
-#         raise ValueError('Unsupported outlier distribution.')
-#     # outlier_tensor = np.zeros((image.shape[0], image.shape[1], len(file_list)))
-#
-#     # 仅在异常通道上添加异常数据，同时添加的异常数据具有不同的形式
-#     if noise_mode == 'part_zero':
-#         corrupted_tensor = original_tensor.copy()
-#         corrupted_tensor_outlier = corrupted_tensor[:, :, outlier_omega == 1]
-#         # 遍历异常通道
-#         for i in range(corrupted_tensor_outlier.shape[2]):
-#             image_outlier = corrupted_tensor_outlier[:, :, i]
-#             (image_x, image_y) = image_outlier.shape
-#             # 随机选取要破坏的区域方块位置，破坏其中10*10的区域
-#             x = np.random.randint(0, image_x - 10)
-#             y = np.random.randint(0, image_y - 10)
-#             image_outlier[x:x+10, y:y+10] = 0
-#
-#         corrupted_tensor[:, :, outlier_omega == 1] = corrupted_tensor_outlier
-#     else:
-#         raise ValueError('Unsupported noise mode.')
-#
-#     outlier_tensor = corrupted_tensor - original_tensor
-#
-#     return corrupted_tensor, outlier_omega, original_tensor, outlier_tensor
+# 引用highway_recovery.py中的数据集生成函数
+from experiments.highway_recovery import tensor_highway_outlier
 
+tensor_highway_outlier = tensor_highway_outlier
 
+# TODO: picture level 的异常数据生成
+# def picture_outlier_data():
 
 
 if __name__ == '__main__':

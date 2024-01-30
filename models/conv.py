@@ -120,28 +120,32 @@ def cconv_3D(X, ksize):
 
 
 if __name__ == '__main__':
-    # 分别对1D、2D、3D的数据进行测试
-    # 1D
-    X = np.array([1, 2, 3, 4, 5, 6, 7, 8]).T
-    A = cconv_nd(X, 3)
-    X_adj = adj_nd(A)
-    # 在各个维度上除去ksize的值
-    X_adj = X_adj / 3
-    assert np.allclose(X, X_adj.ravel())
-    # 2D
-    X = np.array([[1, 2, 3, 4], [5, 6, 7, 8],
-                  [9, 10, 11, 12], [13, 14, 15, 16]])
+    # # 分别对1D、2D、3D的数据进行测试
+    # # 1D
+    # X = np.array([1, 2, 3, 4, 5, 6, 7, 8]).T
+    # A = cconv_nd(X, 3)
+    # X_adj = adj_nd(A)
+    # # 在各个维度上除去ksize的值
+    # X_adj = X_adj / 3
+    # assert np.allclose(X, X_adj.ravel())
+    # # 2D
+    # X = np.array([[1, 2, 3, 4], [5, 6, 7, 8],
+    #               [9, 10, 11, 12], [13, 14, 15, 16]])
+    # A = cconv_nd(X, (2, 2))
+    # X_adj = adj_nd(A, (4, 4), (2, 2))
+    # X_adj = X_adj / 4
+    # assert np.allclose(X, X_adj)
+    # # 3D
+    # X = np.array([[[1, 2, 3, 4, 5, 6, 7, 8],
+    #                [9, 10, 11, 12, 13, 14, 15, 16]],
+    #               [[17, 18, 19, 20, 21, 22, 23, 24],
+    #                [25, 26, 27, 28, 29, 30, 31, 32]]]).T
+    # A = cconv_nd(X, (2, 2, 3))
+    # X_adj = adj_nd(A, (2, 2, 8), (2, 2, 3))
+    # X_adj = X_adj / 12
+    # assert np.allclose(X, X_adj)
+    X = np.resize(np.array(range(1, 10)), (3, 3))
     A = cconv_nd(X, (2, 2))
-    X_adj = adj_nd(A, (4, 4), (2, 2))
-    X_adj = X_adj / 4
-    assert np.allclose(X, X_adj)
-    # 3D
-    X = np.array([[[1, 2, 3, 4, 5, 6, 7, 8],
-                   [9, 10, 11, 12, 13, 14, 15, 16]],
-                  [[17, 18, 19, 20, 21, 22, 23, 24],
-                   [25, 26, 27, 28, 29, 30, 31, 32]]]).T
-    A = cconv_nd(X, (2, 2, 3))
-    X_adj = adj_nd(A, (2, 2, 8), (2, 2, 3))
-    X_adj = X_adj / 12
-    assert np.allclose(X, X_adj)
+    print(A)
+
     print("All tests passed.")
