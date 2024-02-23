@@ -31,7 +31,7 @@ def convlr_outlier_pursuit(M, K, lambda1=0, max_iter=100, tol=1e-6, display=Fals
 
     k = k1 * k2
     if lambda1 == 0:
-        lambda1 = 1 * k / (math.sqrt(m))
+        lambda1 = 1 * k / (math.sqrt(k))
     M_norm2 = np.linalg.norm(M, ord='fro')
 
     mu = 1 / M_norm2 * 1e-3
@@ -132,7 +132,7 @@ def tensor_convlr_outlier_pursuit(M, K, lambda1=0, max_iter=1000, tol=1e-6, disp
 
     return L, S
 
-def lr_outlier_pursuit(M, lambda1=0, max_iter=100, tol=1e-6, display=False):
+def lr_outlier_pursuit(M, lambda1=0, max_iter=1000, tol=1e-6, display=False):
     """
     :param M: input matrix
     :param max_iter: maximum number of iterations
@@ -187,7 +187,8 @@ def columnwise_shrinkage(M, tau):
     (m, n) = M.shape
     for i in range(n):
         # ||M[:, i]||_2 > tau时，赋值为(||M[:, i]||_2 - tau) * M[:, i] / ||M[:, i]||_2，否则赋值为0
-        norm2 = np.linalg.norm(M[:, i], ord='fro')
+        # 之前为何没有出BUG，一次实验时，显示向量无'fro'范数，改为'2'范数，但是之前没调用过这里吗？
+        norm2 = np.linalg.norm(M[:, i], ord=2)
         if norm2 > tau:
             X[:, i] = (norm2 - tau) / norm2 * M[:, i]
         else:

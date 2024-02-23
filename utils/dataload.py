@@ -244,6 +244,8 @@ tensor_highway_outlier = tensor_highway_outlier
 # TODO: picture level 的异常数据生成
 # def picture_outlier_data():
 
+#
+
 
 if __name__ == '__main__':
     # 读取mnist数据集中的1和7组成的数据集
